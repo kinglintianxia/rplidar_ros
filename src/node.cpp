@@ -46,6 +46,8 @@
 using namespace rp::standalone::rplidar;
 
 RPlidarDriver * drv = NULL;
+// king@2018.06.15
+int left_degrees = 0, right_degrees = 360;
 
 void publish_scan(ros::Publisher *pub,
                   rplidar_response_measurement_node_t *nodes,
@@ -83,20 +85,27 @@ void publish_scan(ros::Publisher *pub,
     if (!reverse_data) {
         for (size_t i = 0; i < node_count; i++) {
             float read_value = (float) nodes[i].distance_q2/4.0f/1000;
-            if (read_value == 0.0)
-                scan_msg.ranges[i] = std::numeric_limits<float>::infinity();
-            else
-                scan_msg.ranges[i] = read_value;
-            scan_msg.intensities[i] = (float) (nodes[i].sync_quality >> 2);
+            if (i >= left_degrees && i < right_degrees)
+            {
+                if (read_value == 0.0)
+                    scan_msg.ranges[i] = std::numeric_limits<float>::infinity();
+                else
+                    scan_msg.ranges[i] = read_value;
+                scan_msg.intensities[i] = (float) (nodes[i].sync_quality >> 2);
+            }
         }
     } else {
         for (size_t i = 0; i < node_count; i++) {
             float read_value = (float)nodes[i].distance_q2/4.0f/1000;
-            if (read_value == 0.0)
-                scan_msg.ranges[node_count-1-i] = std::numeric_limits<float>::infinity();
-            else
-                scan_msg.ranges[node_count-1-i] = read_value;
-            scan_msg.intensities[node_count-1-i] = (float) (nodes[i].sync_quality >> 2);
+            if (i >= left_degrees && i < right_degrees)
+            {
+                if (read_value == 0.0)
+                    scan_msg.ranges[node_count-1-i] = std::numeric_limits<float>::infinity();
+                else
+                    scan_msg.ranges[node_count-1-i] = read_value;
+                scan_msg.intensities[node_count-1-i] = (float) (nodes[i].sync_quality >> 2);
+            }
+            
         }
     }
 
@@ -180,6 +189,7 @@ bool start_motor(std_srvs::Empty::Request &req,
   return true;
 }
 
+
 int main(int argc, char * argv[]) {
     ros::init(argc, argv, "rplidar_node");
 
@@ -188,6 +198,8 @@ int main(int argc, char * argv[]) {
     std::string frame_id;
     bool inverted = false;
     bool angle_compensate = true;
+    bool cut_angle = false;
+    // int left_degrees = 0, right_degrees = 0;
 
     ros::NodeHandle nh;
     ros::Publisher scan_pub = nh.advertise<sensor_msgs::LaserScan>("scan", 1000);
@@ -197,7 +209,12 @@ int main(int argc, char * argv[]) {
     nh_private.param<std::string>("frame_id", frame_id, "laser_frame");
     nh_private.param<bool>("inverted", inverted, false);
     nh_private.param<bool>("angle_compensate", angle_compensate, true);
-
+    // king@2018.06.15
+    nh_private.param<bool>("cut_angle", cut_angle, false);  
+    if (cut_angle){  
+        nh_private.param<int>("left_degrees", left_degrees, 0);  
+        nh_private.param<int>("right_degrees", right_degrees, 360);  
+    }  
     printf("RPLIDAR running on ROS package rplidar_ros\n"
            "SDK Version: "RPLIDAR_SDK_VERSION"\n");
 
