@@ -1,3 +1,13 @@
+# rplidar A1 Angle setting :
+![rplidar a1](https://github.com/kinglintianxia/rplidar_ros/blob/master/rplidar_A1.png)
+## Modify launch/rplidar.launch to Set the angle value.
+```shell
+    <param name="cut_angle"    type="bool"   value="true"/>  
+    <param name="left_degrees"    type="int"   value="90"/> 
+    <param name="right_degrees"    type="int"   value="270"/> 
+```
+---
+
 RPLIDAR ROS package
 =====================================================================
 
